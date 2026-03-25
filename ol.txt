@@ -1,0 +1,90 @@
+  // Lógica de la calculadora
+        document.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (calculatorDisplay.textContent === '$') calculatorDisplay.textContent = '$';
+                calculatorDisplay.textContent += btn.textContent;
+            });
+        });
+        document.getElementById('calc-clear').addEventListener('click', () => {
+            calculatorDisplay.textContent = '$';
+        });
+
+        submitTotalBtn.addEventListener('click', () => {
+            const userAnswer = parseFloat(calculatorDisplay.textContent.substring(1));
+            const correctAnswer = gameScript[currentScene].correctAnswer;
+            if (Math.abs(userAnswer - correctAnswer) < 0.01) { // Comparamos flotantes
+                renderScene('success');
+            } else {
+                renderScene('fail_calculation');
+            }
+        });
+
+
+
+
+
+
+        function renderScene(sceneKey) {
+            const scene = gameScript[sceneKey];
+            currentScene = sceneKey;
+
+            // Animar personaje que habla
+            player.classList.toggle('active', scene.character === 'player');
+            npc.classList.toggle('active', scene.character === 'npc');
+            
+            // Mostrar texto del diálogo con efecto de escritura
+            let i = 0;
+            dialogueText.textContent = '';
+            function typeWriter() {
+                if (i < scene.text.length) {
+                    dialogueText.textContent += scene.text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 30);
+                }
+            }
+            typeWriter();
+            
+            // Limpiar y mostrar opciones
+            optionsContainer.innerHTML = '';
+            if (scene.options) {
+                scene.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option.text;
+                    button.className = "w-full text-left bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg transition transform hover:scale-105";
+                    button.onclick = () => renderScene(option.next);
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            // Realizar acciones especiales de la escena
+            if (scene.action) {
+                switch(scene.action) {
+                    case 'show_register':
+                        cashRegister.classList.remove('hidden');
+                        itemList.innerHTML = '';
+                        total = 0;
+                        scene.items.forEach((item, index) => {
+                            setTimeout(() => {
+                                const li = document.createElement('li');
+                                li.className = 'flex justify-between animate-pop-in';
+                                li.innerHTML = `<span>${item.name}</span><span>$${item.price.toFixed(2)}</span>`;
+                                itemList.appendChild(li);
+                                total += item.price;
+                                totalPriceEl.textContent = `$${total.toFixed(2)}`;
+                            }, index * 500);
+                        });
+                        break;
+                    case 'show_calculator':
+                        calculator.classList.remove('hidden');
+                        calculatorDisplay.textContent = '$';
+                        break;
+                    case 'end_game':
+                        document.body.innerHTML = `<div class="text-center text-white animate-fade-in">
+                            <h1 class="text-5xl font-bold">¡Ejercicio Completado!</h1>
+                            <p class="text-2xl mt-4">¡Gran trabajo como cajero!</p>
+                            <a href="/matematicas/menu.php" class="mt-8 inline-block bg-pink-500 hover:bg-pink-600 font-bold py-3 px-6 rounded-lg shadow-lg">Volver al Menú</a>
+                        </div>`;
+                        break;
+                }
+            }
+        }

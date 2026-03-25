@@ -1,0 +1,7 @@
+/node_modules
+.DS_Store
+config.php
+conexion.php
+correo.php
+registro.php
+# Si tienes un archivo con tu API Key o contraseñas, agrégalo aquí
