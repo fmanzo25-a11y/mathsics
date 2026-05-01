@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 30-09-2025 a las 16:49:29
+-- Tiempo de generación: 01-05-2026 a las 06:54:34
 -- Versión del servidor: 10.4.28-MariaDB
 -- Versión de PHP: 8.2.4
 
@@ -79,6 +79,30 @@ INSERT INTO `comentarios` (`id_comentario`, `id_publicacion`, `id_usuario`, `con
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `desafios`
+--
+
+CREATE TABLE `desafios` (
+  `id` int(11) NOT NULL,
+  `titulo` varchar(100) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `recompensa_xp` int(11) DEFAULT 10,
+  `icono` varchar(100) DEFAULT NULL,
+  `objetivo_cantidad` int(11) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `desafios`
+--
+
+INSERT INTO `desafios` (`id`, `titulo`, `descripcion`, `recompensa_xp`, `icono`, `objetivo_cantidad`) VALUES
+(1, 'Resuelve 5 ejercicios', 'Completa 5 ejercicios de cualquier tema', 15, 'fas fa-chart-line', 5),
+(2, 'Gana un duelo', 'Vence a otro jugador en un duelo', 20, 'fas fa-sword', 1),
+(3, 'Acumula 100 XP', 'Obtén 100 puntos de experiencia', 25, 'fas fa-star', 100);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `duelos`
 --
 
@@ -101,7 +125,9 @@ CREATE TABLE `duelos` (
 
 INSERT INTO `duelos` (`id`, `jugador1_id`, `jugador2_id`, `tema`, `estado`, `ganador_id`, `puntuacion_j1`, `puntuacion_j2`, `fecha_creacion`, `fecha_finalizacion`) VALUES
 (8, 29, 24, 'Aritmetica', 'en_curso', NULL, 0, 200, '2025-09-24 19:33:27', NULL),
-(9, 29, NULL, 'Aritmetica', 'buscando', NULL, 0, 0, '2025-09-25 22:01:16', NULL);
+(9, 29, NULL, 'Aritmetica', 'buscando', NULL, 0, 0, '2025-09-25 22:01:16', NULL),
+(10, 29, NULL, 'Aritmetica', 'buscando', NULL, 0, 0, '2025-10-01 00:14:20', NULL),
+(11, 29, NULL, 'Aritmetica', 'buscando', NULL, 0, 0, '2025-10-09 19:44:44', NULL);
 
 -- --------------------------------------------------------
 
@@ -173,21 +199,6 @@ INSERT INTO `ejercicios` (`id`, `tema`, `subtema`, `plantilla_texto`, `parametro
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `estadisticas`
---
-
-CREATE TABLE `estadisticas` (
-  `id_usuario` int(11) DEFAULT NULL,
-  `tasa_de_mejora` float(7,4) DEFAULT NULL,
-  `errores` int(200) DEFAULT NULL,
-  `aciertos` int(200) DEFAULT NULL,
-  `tiempo_estudio` int(200) DEFAULT NULL,
-  `puntos` int(200) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `likes`
 --
 
@@ -206,7 +217,10 @@ INSERT INTO `likes` (`id_like`, `id_usuario`, `id_publicacion`) VALUES
 (2, 7, 6),
 (3, 14, 7),
 (4, 14, 6),
-(5, 25, 7);
+(5, 25, 7),
+(6, 29, 7),
+(7, 29, 6),
+(8, 29, 5);
 
 --
 -- Disparadores `likes`
@@ -313,9 +327,9 @@ INSERT INTO `posts` (`id_publicacion`, `id_usuario`, `titulo`, `contenido`, `lik
 (2, 7, 'hola', 'esta es una prueba', 0, '0', 'aritmetica', NULL, 0, '2025-09-07 00:37:45'),
 (3, 7, 'l', 'l', 0, '0', 'ninguna', NULL, 0, '2025-09-07 01:02:46'),
 (4, 7, 'Prueba', 'Hola este es un nuevo post de prueba para probar que tan bien se ve', 0, '0', 'aritmetica', 'matematicas/uploads/post_68bdbea997e498.53720315.jpg', 0, '2025-09-07 17:19:37'),
-(5, 7, 'lalalala', 'aver si yaa', 0, '0', 'aritmetica', 'matematicas/uploads/post_68bdc0e3c3f8f0.31727134.jpg', 0, '2025-09-07 17:29:07'),
-(6, 7, 'ola', 'vengo a explicarte como mejorar una tecnica que podrias usar seria esta:', 4, '0', 'ninguna', 'uploads/post_68bdcdce047775.62120843.jpg', 0, '2025-09-07 18:24:14'),
-(7, 10, 'ola', 'soy nuevo', 6, '0', 'aritmetica', 'uploads/post_68bdce618c6ee0.65708860.png', 0, '2025-09-07 18:26:41');
+(5, 7, 'lalalala', 'aver si yaa', 2, '0', 'aritmetica', 'matematicas/uploads/post_68bdc0e3c3f8f0.31727134.jpg', 0, '2025-09-07 17:29:07'),
+(6, 7, 'ola', 'vengo a explicarte como mejorar una tecnica que podrias usar seria esta:', 6, '0', 'ninguna', 'uploads/post_68bdcdce047775.62120843.jpg', 0, '2025-09-07 18:24:14'),
+(7, 10, 'ola', 'soy nuevo', 8, '0', 'aritmetica', 'uploads/post_68bdce618c6ee0.65708860.png', 0, '2025-09-07 18:26:41');
 
 -- --------------------------------------------------------
 
@@ -358,11 +372,112 @@ INSERT INTO `ranking` (`id_usuario`, `puntos`, `posicion`) VALUES
 (22, 0, NULL),
 (23, 10005, NULL),
 (24, 0, NULL),
-(25, 0, NULL),
+(25, 180, NULL),
 (26, 0, NULL),
 (27, 0, NULL),
 (28, 0, NULL),
-(29, 0, NULL);
+(29, 375, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `resultados_ejercicios`
+--
+
+CREATE TABLE `resultados_ejercicios` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_ejercicio` int(11) NOT NULL,
+  `respuesta_correcta` tinyint(1) NOT NULL,
+  `tema` varchar(100) NOT NULL,
+  `fecha` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `resultados_ejercicios`
+--
+
+INSERT INTO `resultados_ejercicios` (`id`, `id_usuario`, `id_ejercicio`, `respuesta_correcta`, `tema`, `fecha`) VALUES
+(1, 29, 31, 1, 'Aritmética', '2025-10-16 20:25:28'),
+(2, 29, 2, 0, 'Aritmética', '2025-10-16 20:25:28'),
+(3, 29, 30, 1, 'Aritmética', '2025-10-16 20:25:28'),
+(4, 29, 5, 1, 'Aritmética', '2025-10-16 20:25:28'),
+(5, 29, 33, 1, 'Aritmética', '2025-10-16 20:25:28'),
+(6, 29, 1, 0, 'Aritmética', '2025-10-16 20:31:22'),
+(7, 29, 5, 1, 'Aritmética', '2025-10-16 20:31:22'),
+(8, 29, 29, 1, 'Aritmética', '2025-10-16 20:31:22'),
+(9, 29, 31, 1, 'Aritmética', '2025-10-16 20:31:22'),
+(10, 29, 2, 0, 'Aritmética', '2025-10-16 20:31:22'),
+(11, 29, 30, 0, 'Aritmética', '2025-10-19 21:13:37'),
+(12, 29, 2, 1, 'Aritmética', '2025-10-19 21:13:37'),
+(13, 29, 1, 1, 'Aritmética', '2025-10-19 21:13:37'),
+(14, 29, 5, 1, 'Aritmética', '2025-10-19 21:13:37'),
+(15, 29, 33, 1, 'Aritmética', '2025-10-19 21:13:37'),
+(16, 29, 31, 0, 'Aritmética', '2025-10-19 21:18:08'),
+(17, 29, 30, 1, 'Aritmética', '2025-10-19 21:18:08'),
+(18, 29, 34, 0, 'Aritmética', '2025-10-19 21:18:08'),
+(19, 29, 29, 1, 'Aritmética', '2025-10-19 21:18:08'),
+(20, 29, 1, 1, 'Aritmética', '2025-10-19 21:18:08'),
+(21, 29, 1, 0, 'Aritmética', '2025-10-20 02:52:52'),
+(22, 29, 30, 0, 'Aritmética', '2025-10-20 02:52:52'),
+(23, 29, 5, 0, 'Aritmética', '2025-10-20 02:52:52'),
+(24, 29, 29, 1, 'Aritmética', '2025-10-20 02:52:52'),
+(25, 29, 34, 0, 'Aritmética', '2025-10-20 02:52:52'),
+(26, 25, 1, 1, 'Aritmética', '2026-03-25 22:53:21'),
+(27, 25, 32, 1, 'Aritmética', '2026-03-25 22:53:21'),
+(28, 25, 31, 1, 'Aritmética', '2026-03-25 22:53:21'),
+(29, 25, 2, 1, 'Aritmética', '2026-03-25 22:53:21'),
+(30, 25, 29, 1, 'Aritmética', '2026-03-25 22:53:21'),
+(31, 25, 34, 0, 'Aritmética', '2026-03-26 00:18:25'),
+(32, 25, 29, 0, 'Aritmética', '2026-03-26 00:18:25'),
+(33, 25, 32, 0, 'Aritmética', '2026-03-26 00:18:25'),
+(34, 25, 5, 1, 'Aritmética', '2026-03-26 00:18:25'),
+(35, 25, 1, 0, 'Aritmética', '2026-03-26 00:18:25'),
+(36, 25, 32, 0, 'Aritmética', '2026-03-26 04:21:55'),
+(37, 25, 29, 0, 'Aritmética', '2026-03-26 04:21:55'),
+(38, 25, 33, 0, 'Aritmética', '2026-03-26 04:21:55'),
+(39, 25, 30, 1, 'Aritmética', '2026-03-26 04:21:55'),
+(40, 25, 1, 1, 'Aritmética', '2026-03-26 04:21:55'),
+(41, 25, 1, 1, 'Aritmética', '2026-03-26 18:26:26'),
+(42, 25, 29, 1, 'Aritmética', '2026-03-26 18:26:26'),
+(43, 25, 32, 1, 'Aritmética', '2026-03-26 18:26:26'),
+(44, 25, 2, 1, 'Aritmética', '2026-03-26 18:26:26'),
+(45, 25, 5, 0, 'Aritmética', '2026-03-26 18:26:26');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `scratch_games`
+--
+
+CREATE TABLE `scratch_games` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `titulo` varchar(255) NOT NULL,
+  `scratch_id` varchar(255) NOT NULL,
+  `fecha_publicacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `likes` int(11) DEFAULT 0,
+  `num_comentarios` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `scratch_games`
+--
+
+INSERT INTO `scratch_games` (`id`, `id_usuario`, `titulo`, `scratch_id`, `fecha_publicacion`, `likes`, `num_comentarios`) VALUES
+(1, 29, 'wow', '1226692283', '2025-10-08 22:55:23', 0, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `scratch_likes`
+--
+
+CREATE TABLE `scratch_likes` (
+  `id` int(11) NOT NULL,
+  `id_juego` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -415,7 +530,7 @@ INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `contrasena`, `edad`, `fecha_r
 (5, 'jaremcito', 'lol@gmail.com', '$2y$10$9NsAVf7ycvgkSn4mggblRei.weZywKHix4QMdDip6hk5NeHvcTTj2', '19', '2025-09-06 23:28:44', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 0, NULL, '1'),
 (6, 'ala', 'ala@gmail.com', '$2y$10$RhwUD0qZR/eFpVLURKDDyOeAO1wE5yoJ54IrGQxipQpy3/DDxtBRK', '19', '2025-09-06 23:32:43', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 0, NULL, '1'),
 (7, 'jaremcito', 'andrea@gmail.com', '$2y$10$rWqsjg1JvmmK/BofQZdoTuEbs02kdKnV0FIR3Ih.emQ5Cn50T7JK2', '19', '2025-09-06 23:39:15', 7, 225, 158, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 3, '2025-09-08', '1'),
-(8, 'lala', 'po@gmail.com', '$2y$10$i16ngAmO6jmxi.fRVcJ9AOhoKJtEjXeA00fE2bNvoTkM8zDQu7NI6', '10', '2025-09-07 07:37:50', 1, 20, 0, 'images/sinfoto.jpeg', 'Nino', 'Inactiva', NULL, 0, 0, NULL, '1'),
+(8, 'lala', 'po@gmail.com', '$2y$10$i16ngAmO6jmxi.fRVcJ9AOhoKJtEjXeA00fE2bNvoTkM8zDQu7NI6', '10', '2025-09-07 07:37:50', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 0, NULL, '1'),
 (9, 'po', 'lala@gmail.com', '$2y$10$ahTpHOgvTqEso.ZtL9/5u.tsMy/KGJlYix6xD7iTKA.nzmFbqPbO6', '11', '2025-09-07 07:39:11', 1, 20, 0, 'images/sinfoto.jpeg', 'Nino', 'Activa', NULL, 0, 0, NULL, '1'),
 (10, 'Pollito rico', 'jaremcito@gmail.com', '$2y$10$Vlsq.fdUC.K9BvTq4VcHrepjLtZOq4SJU5TDd4HqoArxxqepFAKUW', '19', '2025-09-07 17:22:07', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 0, NULL, '1'),
 (11, 'Samuel', 'samuelcanorosas@gmail.com', '$2y$10$glDUGHfPCmWo2w.Dp3TekO3MObNl2rZoNezIdXhMbg96ac/s/ZaY6', '18', '2025-09-08 13:56:05', 12, 1702, 1354, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 1, '2025-09-08', '1'),
@@ -432,11 +547,11 @@ INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `contrasena`, `edad`, `fecha_r
 (22, 'Alex', 'alexprosito@gmail.com', '$2y$10$7u9F3veuIYkJf0ON7v5BK.fXmNUJQ/GN2avjiJG0n63/Ea0AAOm2K', '18', '2025-09-08 17:36:38', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 0, NULL, '1'),
 (23, 'Alex', 'alexander@gmail.com', '$2y$10$pUhbZNzncQ5rNcUpPUR3G.nK/CO2SncPZo6O51QtpprufcNXpCZwG', '18', '2025-09-08 17:38:22', 14, 3829, 2379, 'images/sinfoto.jpeg', 'Normal', 'Activa', NULL, 0, 1, '2025-09-08', '1'),
 (24, 'jarem', 'xxbranxxterxx@gmail.com', '$2y$10$AKHQelcBj2w/etVhJOVrK.3XmwryR6ZcToqB/pCCIhKAuXqVamwgW', '19', '2025-09-10 05:18:07', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', '2130bb867d637553b78ca36adff6322579c7c7d2ff7df9866284a9dd219254da', 1, 0, NULL, '1'),
-(25, 'jarem', 'anghle-@outlook.com', '$2y$10$1RIEJ9pcNVsnhvK2ohk6TO/q1N8zaMFYZydYwl3xicwq3TvkjoMzC', '19', '2025-09-10 05:22:05', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', '25e5cb9eee09fb391c0ec0c7df44a4424aa068e28db53fab98aee8602b5549ac', 1, 0, NULL, '1'),
+(25, 'jarem', 'anghle-@outlook.com', '$2a$10$ZruM8p/MvrrH4He/OwgDVOxTH2lKRO5HofP.Ksz2HSOoBE/c4sXbC', '19', '2025-09-10 05:22:05', 5, 100, 18, 'images/sinfoto.jpeg', 'Normal', 'Activa', '25e5cb9eee09fb391c0ec0c7df44a4424aa068e28db53fab98aee8602b5549ac', 1, 2, '2026-03-26', '1'),
 (26, 'andreabbella', 'yeny.palma.suastegui@gmail.com', '$2y$10$4UFhq7kUmEWSLUf5MW2Z..aIeLM5VLg7ZIu/WmsvdSUFVKaL/57jG', '19', '2025-09-10 05:25:09', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Inactiva', '56390dc9e35eac5cfa786b47e24717bfcf1aab259a6ed4bab66b2334bf4e2834', 0, 0, NULL, '1'),
 (27, 'andiyjarem', 'yjaremcitoandi@gmail.com', '$2y$10$pX3nsx5BeOz1KSuYn.mLje8ZwkCVwyg5vSXHi0U7wJRj3I9fHDmGi', '19', '2025-09-10 05:31:33', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Inactiva', 'f2ca962e89033df80b659c8d4ab0ec68c8c8a6abd56e7df4405096cedc3109bc', 0, 0, NULL, '1'),
 (28, 'poooo', 'nueo@gmail.com', '$2y$10$NKpChYiknzw3C0u9hX0CmOdtVydFIRIV.GLW2gwVj5pxxY1vjbx9u', '14', '2025-09-10 18:26:55', 1, 20, 0, 'images/sinfoto.jpeg', 'Nino', 'Activa', '982b53cb60c66f087f73819ed61a4f442700e9ef0850c69460fa8168f377c289', 0, 0, NULL, '1'),
-(29, 'Jarem', 'jaremmanzo@gmail.com', '$2y$10$.95R3KoB3qD7gd1haPcknujhcqDibFjb1F9rE8lx92ZG.nHgSAK7G', '19', '2025-09-24 19:18:34', 1, 20, 0, 'images/sinfoto.jpeg', 'Normal', 'Activa', '58dbf2d2e7fb28c7cec6b3bbe5211a883e84c55fa6113981686ed5fc65f30261', 1, 0, NULL, '1');
+(29, 'Jarem', 'jaremmanzo@gmail.com', '$2y$10$.95R3KoB3qD7gd1haPcknujhcqDibFjb1F9rE8lx92ZG.nHgSAK7G', '19', '2025-09-24 19:18:34', 6, 150, 113, 'images/sinfoto.jpeg', 'Normal', 'Activa', '58dbf2d2e7fb28c7cec6b3bbe5211a883e84c55fa6113981686ed5fc65f30261', 1, 1, '2025-10-19', '0');
 
 --
 -- Disparadores `usuarios`
@@ -493,6 +608,45 @@ END
 $$
 DELIMITER ;
 
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuario_desafios`
+--
+
+CREATE TABLE `usuario_desafios` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_desafio` int(11) NOT NULL,
+  `fecha_asignado` date NOT NULL,
+  `progreso` int(11) DEFAULT 0,
+  `estado` enum('activo','completado','expirado') DEFAULT 'activo'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `usuario_desafios`
+--
+
+INSERT INTO `usuario_desafios` (`id`, `id_usuario`, `id_desafio`, `fecha_asignado`, `progreso`, `estado`) VALUES
+(1, 25, 1, '2026-03-25', 0, 'activo'),
+(2, 25, 2, '2026-03-25', 0, 'activo'),
+(3, 25, 3, '2026-03-25', 0, 'activo'),
+(4, 25, 1, '2026-03-26', 0, 'activo'),
+(5, 25, 3, '2026-03-26', 0, 'activo'),
+(6, 25, 2, '2026-03-26', 0, 'activo'),
+(7, 25, 1, '2026-04-08', 0, 'activo'),
+(8, 25, 3, '2026-04-08', 0, 'activo'),
+(9, 25, 2, '2026-04-08', 0, 'activo'),
+(10, 25, 1, '2026-04-18', 0, 'activo'),
+(11, 25, 2, '2026-04-18', 0, 'activo'),
+(12, 25, 3, '2026-04-18', 0, 'activo'),
+(13, 25, 3, '2026-04-28', 0, 'activo'),
+(14, 25, 2, '2026-04-28', 0, 'activo'),
+(15, 25, 1, '2026-04-28', 0, 'activo'),
+(16, 25, 1, '2026-04-30', 0, 'activo'),
+(17, 25, 2, '2026-04-30', 0, 'activo'),
+(18, 25, 3, '2026-04-30', 0, 'activo');
+
 --
 -- Índices para tablas volcadas
 --
@@ -504,6 +658,12 @@ ALTER TABLE `comentarios`
   ADD PRIMARY KEY (`id_comentario`),
   ADD KEY `id_publicacion` (`id_publicacion`),
   ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Indices de la tabla `desafios`
+--
+ALTER TABLE `desafios`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `duelos`
@@ -519,12 +679,6 @@ ALTER TABLE `duelos`
 --
 ALTER TABLE `ejercicios`
   ADD PRIMARY KEY (`id`);
-
---
--- Indices de la tabla `estadisticas`
---
-ALTER TABLE `estadisticas`
-  ADD KEY `id_usuario` (`id_usuario`);
 
 --
 -- Indices de la tabla `likes`
@@ -571,6 +725,29 @@ ALTER TABLE `ranking`
   ADD KEY `id_usuario` (`id_usuario`);
 
 --
+-- Indices de la tabla `resultados_ejercicios`
+--
+ALTER TABLE `resultados_ejercicios`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario` (`id_usuario`),
+  ADD KEY `id_ejercicio` (`id_ejercicio`);
+
+--
+-- Indices de la tabla `scratch_games`
+--
+ALTER TABLE `scratch_games`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Indices de la tabla `scratch_likes`
+--
+ALTER TABLE `scratch_likes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_like` (`id_juego`,`id_usuario`),
+  ADD KEY `id_usuario` (`id_usuario`);
+
+--
 -- Indices de la tabla `trofeos`
 --
 ALTER TABLE `trofeos`
@@ -583,6 +760,14 @@ ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `usuario_desafios`
+--
+ALTER TABLE `usuario_desafios`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario` (`id_usuario`),
+  ADD KEY `id_desafio` (`id_desafio`);
+
+--
 -- AUTO_INCREMENT de las tablas volcadas
 --
 
@@ -593,10 +778,16 @@ ALTER TABLE `comentarios`
   MODIFY `id_comentario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
+-- AUTO_INCREMENT de la tabla `desafios`
+--
+ALTER TABLE `desafios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT de la tabla `duelos`
 --
 ALTER TABLE `duelos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `ejercicios`
@@ -608,7 +799,7 @@ ALTER TABLE `ejercicios`
 -- AUTO_INCREMENT de la tabla `likes`
 --
 ALTER TABLE `likes`
-  MODIFY `id_like` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_like` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `mensajes`
@@ -629,10 +820,34 @@ ALTER TABLE `posts`
   MODIFY `id_publicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
+-- AUTO_INCREMENT de la tabla `resultados_ejercicios`
+--
+ALTER TABLE `resultados_ejercicios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+
+--
+-- AUTO_INCREMENT de la tabla `scratch_games`
+--
+ALTER TABLE `scratch_games`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `scratch_likes`
+--
+ALTER TABLE `scratch_likes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
+-- AUTO_INCREMENT de la tabla `usuario_desafios`
+--
+ALTER TABLE `usuario_desafios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- Restricciones para tablas volcadas
@@ -652,12 +867,6 @@ ALTER TABLE `duelos`
   ADD CONSTRAINT `duelos_ibfk_1` FOREIGN KEY (`jugador1_id`) REFERENCES `usuarios` (`id`),
   ADD CONSTRAINT `duelos_ibfk_2` FOREIGN KEY (`jugador2_id`) REFERENCES `usuarios` (`id`),
   ADD CONSTRAINT `duelos_ibfk_3` FOREIGN KEY (`ganador_id`) REFERENCES `usuarios` (`id`);
-
---
--- Filtros para la tabla `estadisticas`
---
-ALTER TABLE `estadisticas`
-  ADD CONSTRAINT `estadisticas_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`);
 
 --
 -- Filtros para la tabla `likes`
@@ -700,10 +909,37 @@ ALTER TABLE `ranking`
   ADD CONSTRAINT `ranking_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`);
 
 --
+-- Filtros para la tabla `resultados_ejercicios`
+--
+ALTER TABLE `resultados_ejercicios`
+  ADD CONSTRAINT `resultados_ejercicios_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`),
+  ADD CONSTRAINT `resultados_ejercicios_ibfk_2` FOREIGN KEY (`id_ejercicio`) REFERENCES `ejercicios` (`id`);
+
+--
+-- Filtros para la tabla `scratch_games`
+--
+ALTER TABLE `scratch_games`
+  ADD CONSTRAINT `scratch_games_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `scratch_likes`
+--
+ALTER TABLE `scratch_likes`
+  ADD CONSTRAINT `scratch_likes_ibfk_1` FOREIGN KEY (`id_juego`) REFERENCES `scratch_games` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `scratch_likes_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
+
+--
 -- Filtros para la tabla `trofeos`
 --
 ALTER TABLE `trofeos`
   ADD CONSTRAINT `trofeos_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`);
+
+--
+-- Filtros para la tabla `usuario_desafios`
+--
+ALTER TABLE `usuario_desafios`
+  ADD CONSTRAINT `usuario_desafios_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`),
+  ADD CONSTRAINT `usuario_desafios_ibfk_2` FOREIGN KEY (`id_desafio`) REFERENCES `desafios` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

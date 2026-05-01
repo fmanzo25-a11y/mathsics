@@ -81,6 +81,8 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
             <h2 id="question-text" class="text-2xl sm:text-3xl md:text-4xl font-black text-center mb-8 text-slate-800">Cargando...</h2>
             <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             <div id="explanation-container"></div>
+              <!-- CONTENEDOR NUEVO PARA LA IA -->
+            <div id="ia-container" class="mt-4"></div>
         </div>
         
         <footer class="py-4">
@@ -116,6 +118,7 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
             let timerInterval;
             const DURATION = 30;
             let resultadosEjercicios = [];
+            let ultimaRespuestaUsuario = '';
 
             function vibrateDevice(pattern) {
                 if ('vibrate' in navigator) {
@@ -158,6 +161,8 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                 if (!exercise) return;
                 explanationContainer.classList.remove('show');
                 explanationContainer.innerHTML = '';
+                document.getElementById('ia-container').innerHTML = '';
+                ultimaRespuestaUsuario = '';
                 questionText.innerHTML = exercise.pregunta;
                 optionsGrid.innerHTML = '';
                 
@@ -177,12 +182,13 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
 
             function updateProgress() { const total = exercises.length; if (total === 0) return; progressText.textContent = `Ejercicio ${currentExerciseIndex + 1} de ${total}`; progressBar.style.width = `${((currentExerciseIndex + 1) / total) * 100}%`; }
 
-            function selectAnswer(e) {
+                        function selectAnswer(e) {
                 clearInterval(timerInterval);
                 const selectedButton = e.currentTarget;
                 const selectedAnswer = selectedButton.dataset.answer;
                 const correctAnswer = exercises[currentExerciseIndex].solucion;
                 const isCorrect = String(selectedAnswer) === String(correctAnswer);
+                ultimaRespuestaUsuario = String(selectedAnswer);
 
                 resultadosEjercicios.push({
                     id_ejercicio: exercises[currentExerciseIndex].id_ejercicio,
@@ -192,6 +198,10 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                 
                 document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
                 const feedbackIcon = selectedButton.querySelector('.feedback-icon');
+
+                // Asegurarse de vaciar el contenedor de IA de ejercicios anteriores y callar a la IA si seguía hablando
+                document.getElementById('ia-container').innerHTML = '';
+                window.speechSynthesis.cancel();
 
                 if (isCorrect) {
                     correctSound?.play().catch(e => console.warn("Audio failed"));
@@ -205,10 +215,103 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                     selectedButton.className = `option-btn flex justify-between items-center text-lg font-bold p-4 rounded-xl text-white bg-red-500 border-b-4 border-red-700`;
                     feedbackIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
                     animateElement(exerciseContainer, 'animate-shake');
+                    
+                    // LLAMAMOS AL TUTOR IA PORQUE SE EQUIVOCÓ
+                    
                 }
                 revealCorrectAnswer(selectedAnswer);
                 showExplanation();
                 nextButton.classList.remove('hidden');
+            }
+
+            // === PEGA ESTAS NUEVAS FUNCIONES ANTES DE: nextButton.addEventListener('click', loadNextExercise); ===
+
+            async function solicitarAyudaIA(ejercicio, respuestaUsuario, nivelDetalle = 'basico') {
+                const iaContainer = document.getElementById('ia-container');
+                if (!iaContainer) return;
+
+                const ejercicioPayload = {
+                    pregunta: String(ejercicio?.pregunta ?? ''),
+                    opciones: Array.isArray(ejercicio?.opciones) ? ejercicio.opciones : [],
+                    solucion: String(ejercicio?.solucion ?? ''),
+                    tema: String(ejercicio?.tema ?? ''),
+                    explicacion: String(ejercicio?.explicacion ?? '')
+                };
+                const respuestaPayload = String(respuestaUsuario ?? '');
+
+                // Mostrar mensaje de "Pensando..."
+                iaContainer.innerHTML = `
+                    <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg text-left mt-2 animate-fade-in-up">
+                        <h3 class="font-black text-lg mb-2 flex items-center gap-2 text-indigo-700">
+                            <i class="fa-solid fa-robot fa-bounce"></i> Tutor IA Pensando...
+                        </h3>
+                        <p class="text-slate-600 font-semibold text-sm">Analizando tu respuesta y buscando la mejor manera de explicarlo...</p>
+                    </div>
+                `;
+
+                try {
+                    const respuesta = await fetch('gemini_tutor.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ejercicio: ejercicioPayload,
+                            respuesta_usuario: respuestaPayload,
+                            nivel_detalle: nivelDetalle
+                        })
+                    });
+
+                    const data = await respuesta.json();
+                    
+                    // Renderizar respuesta
+                    iaContainer.innerHTML = `
+                        <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg text-left mt-2 animate-fade-in-up">
+                            <h3 class="font-black text-lg mb-2 flex items-center gap-2 text-indigo-700">
+                                <i class="fa-solid fa-robot"></i> Tutor IA dice:
+                            </h3>
+                            <p class="text-slate-600 font-semibold text-sm mb-3">${data.explicacion}</p>
+                            ${nivelDetalle === 'basico' ? `<button id="btn-saber-mas" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95"><i class="fa-solid fa-plus-circle mr-1"></i> ¡Explícame más a fondo!</button>` : ''}
+                        </div>
+                    `;
+                    
+                    // Leer texto en voz alta
+                    leerTextoConVoz(data.explicacion);
+
+                    // Si estamos en nivel básico, asignar acción al botón de "Saber más"
+                    if (nivelDetalle === 'basico') {
+                        document.getElementById('btn-saber-mas').addEventListener('click', (e) => {
+                            e.target.disabled = true;
+                            e.target.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Cargando...';
+                            solicitarAyudaIA(ejercicioPayload, respuestaPayload, 'profundo');
+                        });
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    iaContainer.innerHTML = `
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg text-left mt-2 animate-fade-in-up">
+                            <p class="text-red-700 font-semibold text-sm"><i class="fa-solid fa-triangle-exclamation mr-1"></i> El tutor IA está tomando un descanso. Intenta de nuevo más tarde.</p>
+                        </div>`;
+                }
+            }
+
+            function leerTextoConVoz(texto) {
+                // Detener si hay un audio reproduciéndose
+                window.speechSynthesis.cancel(); 
+                
+                // Limpiar asteriscos que a veces envía la IA
+                const textoLimpio = texto.replace(/\*/g, ''); 
+                const mensaje = new SpeechSynthesisUtterance(textoLimpio);
+                
+                mensaje.lang = 'es-ES'; // O es-MX según prefieras
+                mensaje.rate = 1.0; 
+                mensaje.pitch = 1.0;
+                
+                // Intentar usar la mejor voz en español disponible
+                const voces = window.speechSynthesis.getVoices();
+                const vozEspanol = voces.find(v => v.lang.includes('es'));
+                if (vozEspanol) mensaje.voice = vozEspanol;
+
+                window.speechSynthesis.speak(mensaje);
             }
             
             function showExplanation() {
@@ -220,11 +323,24 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                                 <i class="fa-solid fa-circle-info"></i>¡Aprende el truco!
                             </h3>
                             <p class="text-slate-600 font-semibold">${explanationText}</p>
+                            <button id="btn-ia-explicacion" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg text-sm mt-3 transition-all duration-150 active:scale-95"><i class="fa-solid fa-robot mr-1"></i> Preguntarle al tutor IA</button>
                         </div>
                     `;
                     setTimeout(() => { explanationContainer.classList.add('show'); }, 50);
                 }
             }
+
+            explanationContainer.addEventListener('click', (event) => {
+                const trigger = event.target.closest('#btn-ia-explicacion');
+                if (!trigger) return;
+
+                window.speechSynthesis.cancel();
+
+                const ejercicioActual = exercises[currentExerciseIndex];
+                if (!ejercicioActual) return;
+
+                solicitarAyudaIA(ejercicioActual, ultimaRespuestaUsuario, 'basico');
+            });
 
             function revealCorrectAnswer(selectedAnswer = null) {
                 document.querySelectorAll('.option-btn').forEach(btn => {
@@ -289,7 +405,16 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
 
             async function fetchExercises() { try { const tema = "<?php echo addslashes($tema_actual); ?>"; const subtema = "<?php echo addslashes($subtema_actual); ?>"; if (!tema) throw new Error('No se ha seleccionado un tema.'); const url = `ejercicios.php?cantidad=5&tema=${encodeURIComponent(tema)}&subtema=${encodeURIComponent(subtema)}`; const response = await fetch(url); const data = await response.json(); if (!response.ok || data.error) throw new Error(data.error || 'Error al cargar los ejercicios.'); exercises = data; if (!exercises || exercises.length === 0) throw new Error('No se encontraron ejercicios para este tema.'); loadExercise(exercises[currentExerciseIndex]); } catch (error) { console.error('Error:', error); questionText.innerHTML = `No se pudieron cargar los ejercicios. <br><small class="text-red-500 mt-2 block">${error.message}</small>`; optionsGrid.innerHTML = ''; timerContainer.style.display = 'none'; } }
 
-            nextButton.addEventListener('click', loadNextExercise);
+           nextButton.addEventListener('click', (event) => {
+  nextClicked = true;
+
+  if (nextClicked) {
+    // Esto se cumple cuando ya hubo al menos un click
+     window.speechSynthesis.cancel(); 
+  }
+
+  loadNextExercise(event);
+});
             fetchExercises();
         });
     </script>
