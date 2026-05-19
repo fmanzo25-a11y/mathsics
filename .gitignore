@@ -1,7 +1,34 @@
-/node_modules
-.DS_Store
+# Dependencias (Composer, Node)
+vendor/
+node_modules/
+
+# Entornos virtuales de Python
+.venv/
+venv/
+env/
+__pycache__/
+
+# Archivos de configuración, conexión y correo (pueden contener contraseñas y claves API)
 config.php
 conexion.php
+configuracion.php
+correos.php
 correo.php
 registro.php
-# Si tienes un archivo con tu API Key o contraseñas, agrégalo aquí
+.env
+
+# Directorios de subidas de usuarios
+uploads/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs y bases de datos locales
+*.log
+*.sql
+*.sqlite
+
+# Archivos de IDE y editores
+.vscode/
+.idea/
