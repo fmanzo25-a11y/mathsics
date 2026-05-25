@@ -1,0 +1,20 @@
+.like-button, .dislike-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    margin: 5px;
+}
+.like-button i {
+    color: green; /* Default like color */
+}
+.dislike-button i {
+    color: red; /* Default dislike color */
+}
+/* Add styles for active/selected state */
+.like-button.active i {
+    color: darkgreen; 
+}
+.dislike-button.active i {
+    color: darkred; 
+}

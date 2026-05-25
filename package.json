@@ -1,0 +1,27 @@
+{
+  "name": "matematicas",
+  "version": "1.0.0",
+  "main": "duelo.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "dev": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --watch",
+    "build": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fmanzo25-a11y/mathsics.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fmanzo25-a11y/mathsics/issues"
+  },
+  "homepage": "https://github.com/fmanzo25-a11y/mathsics#readme",
+  "description": "",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}
