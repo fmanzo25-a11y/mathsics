@@ -37,19 +37,50 @@ try {
         if (method_exists('Db', 'check_and_update_level')) {
              Db::check_and_update_level($id_usuario);
         }
-        // Actualizar ranking (Anti-Smurfing)
+        // Actualizar ranking (Ligas Dinámicas: Puntos Normalizados y Castigo)
         $isTop3 = false;
         $posicionRanking = 0;
-        $puntosRankingReales = $score * $nivelInicial;
-        $stmtUpdateRanking = $conn->prepare("UPDATE ranking SET puntos = puntos + :xpGanada WHERE id_usuario = :id_usuario");
-        $stmtUpdateRanking->execute([':xpGanada' => $puntosRankingReales, ':id_usuario' => $id_usuario]);
+        $puntosRankingReales = 0;
+        $puntosPerdidos = 0;
+        $miLigaActual = 'Aficionado';
+        $rankEnMiLiga = 0;
+        
+        include_once 'ligas.php';
+        verificarYEjecutarReinicioMensual($conn);
+        $infoLigas = obtenerInfoLigas($conn);
+        $miRangoNum = isset($infoLigas[$id_usuario]['rango_num']) ? $infoLigas[$id_usuario]['rango_num'] : 1;
+        
+        $puntosPorInactividad = procesarDecaimientoInactividad($conn, $id_usuario, $miRangoNum);
+        
+        // En desafíos el accuracy es `$accuracy` y se envia por POST (0 a 100)
+        $precision = isset($accuracy) ? $accuracy : 0;
+        
+        if ($score > 0) { // Si sobrevivió el desafío
+            $multiplicador_nivel = 1.0 + ($nivelInicial * 0.05);
+            $puntosRankingReales = ceil(($correct_count * 15) * $multiplicador_nivel); // Desafios dan +50% mas base
+            $stmtUpdateRanking = $conn->prepare("UPDATE ranking SET puntos = puntos + :puntosRanking WHERE id_usuario = :id_usuario");
+            $stmtUpdateRanking->execute([':puntosRanking' => $puntosRankingReales, ':id_usuario' => $id_usuario]);
+        } else {
+            // Perdió vidas muy pronto (precisión baja o 0 correct_count)
+            $multiplicador_castigo = max(1, ($nivelInicial / 2)) * $miRangoNum;
+            $puntosPerdidos = ceil(10 * $multiplicador_castigo); // Fijo 10 pts base * mult por perder desafio
+            if ($puntosPerdidos <= 0) $puntosPerdidos = 10;
+            
+            $stmtUpdateRanking = $conn->prepare("UPDATE ranking SET puntos = GREATEST(5, CAST(puntos AS SIGNED) - :puntosPerdidos) WHERE id_usuario = :id_usuario");
+            $stmtUpdateRanking->execute([':puntosPerdidos' => $puntosPerdidos, ':id_usuario' => $id_usuario]);
+        }
 
-        // Obtener posición actual en el ranking
-        $stmtPos = $conn->prepare("SELECT COUNT(*) + 1 as posicion FROM ranking WHERE puntos > (SELECT puntos FROM ranking WHERE id_usuario = :id_usuario)");
-        $stmtPos->execute(['id_usuario' => $id_usuario]);
-        $posicionRanking = (int)$stmtPos->fetchColumn();
-        if ($posicionRanking > 0 && $posicionRanking <= 3) {
-            $isTop3 = true;
+        // Obtener nueva posición
+        $infoLigasNuevas = obtenerInfoLigas($conn);
+        if (isset($infoLigasNuevas[$id_usuario])) {
+            $miLigaActual = $infoLigasNuevas[$id_usuario]['liga'];
+            $posicionRanking = $infoLigasNuevas[$id_usuario]['posicion'];
+            $rankEnMiLiga = 1;
+            foreach($infoLigasNuevas as $id => $data) {
+                if ($id == $id_usuario) break;
+                if ($data['liga'] == $miLigaActual) $rankEnMiLiga++;
+            }
+            if ($rankEnMiLiga <= 3) $isTop3 = true;
         }        // Actualizar desafíos diarios (XP y aciertos)
         $stmtDesafiosActivos = $conn->prepare("SELECT ud.id, d.tipo, d.objetivo_cantidad, ud.progreso FROM usuario_desafios ud JOIN desafios d ON ud.id_desafio = d.id WHERE ud.id_usuario = :id_u AND ud.estado = 'activo' AND ud.fecha_asignado = CURDATE()");
         $stmtDesafiosActivos->execute(['id_u' => $id_usuario]);
@@ -141,8 +172,8 @@ try {
             <?php endif; ?>
 
             <?php if (isset($isTop3) && $isTop3): ?>
-                <div class="mt-6 mb-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl p-4 shadow-lg transform -rotate-1 animate-pulse-glow">
-                    <p class="text-white font-black text-xl"><i class="fas fa-crown text-2xl mr-2"></i> ¡Felicidades! ¡Estás entre los 3 mejores del mundo! (#<?php echo $posicionRanking; ?>)</p>
+                <div class="mt-6 mb-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-4 shadow-lg transform -rotate-1 animate-pulse-glow">
+                    <p class="text-white font-black text-xl"><i class="fas fa-crown text-2xl mr-2"></i> ¡Impresionante! ¡Estás en el Top 3 de la Liga <?php echo $miLigaActual; ?>! (#<?php echo $rankEnMiLiga; ?>)</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -156,10 +187,17 @@ try {
                 <p class="text-slate-400 text-xs font-black tracking-widest uppercase">Nivel Máximo</p>
                 <p class="text-3xl font-black text-blue-500"><?php echo $max_level; ?> <i class="fas fa-fire text-orange-500 text-xl ml-1"></i></p>
             </div>
-            <div class="bg-purple-100 p-4 rounded-2xl shadow-sm border border-purple-200">
-                <p class="text-purple-800 text-xs font-black tracking-widest uppercase">Ranking MMR</p>
-                <p class="text-3xl font-black text-purple-600">+<?php echo htmlspecialchars(isset($puntosRankingReales) ? $puntosRankingReales : 0); ?> pts</p>
-            </div>
+            <?php if (isset($puntosPerdidos) && $puntosPerdidos > 0): ?>
+                <div class="bg-red-100 p-4 rounded-2xl shadow-sm border border-red-200">
+                    <p class="text-red-800 text-xs font-black tracking-widest uppercase">Castigo de Liga</p>
+                    <p class="text-3xl font-black text-red-600">-<?php echo htmlspecialchars($puntosPerdidos); ?> pts</p>
+                </div>
+            <?php else: ?>
+                <div class="bg-purple-100 p-4 rounded-2xl shadow-sm border border-purple-200">
+                    <p class="text-purple-800 text-xs font-black tracking-widest uppercase">Ranking MMR</p>
+                    <p class="text-3xl font-black text-purple-600">+<?php echo htmlspecialchars($puntosRankingReales); ?> pts</p>
+                </div>
+            <?php endif; ?>
             <div class="bg-gradient-to-br from-yellow-400 to-orange-500 p-4 rounded-2xl shadow-md text-white transform hover:scale-105 transition">
                 <p class="text-white/80 text-xs font-black tracking-widest uppercase">XP Masiva Obtenida</p>
                 <p class="text-3xl font-black">+<?php echo $score; ?> XP</p>

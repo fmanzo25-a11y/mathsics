@@ -8,12 +8,19 @@ if (isset($_SESSION['user_id'])) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script>if(localStorage.getItem('lowPerf')==='1') document.documentElement.classList.add('low-perf');</script>
+    <script>
+        if(localStorage.getItem('lowPerf')==='1') document.documentElement.classList.add('low-perf');
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mathsics - Plataforma Interactiva de Matemáticas</title>
     <link rel="icon" href="images/logo.png" type="image/png">
-    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/tailwind.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,11 +29,16 @@ if (isset($_SESSION['user_id'])) {
     <style>
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f0f9ff;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .gradient-text {
             background: linear-gradient(to right, #3b82f6, #1e40af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dark .gradient-text {
+            background: linear-gradient(to right, #60a5fa, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -36,27 +48,12 @@ if (isset($_SESSION['user_id'])) {
         }
         .card-3d:hover {
             transform: translateY(-10px) translateZ(20px) rotateX(5deg);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+        }
+        .dark .card-3d:hover {
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
         }
         .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; opacity: 0; }
-        
-        /* Glassmorphism & Blobs */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-        }
-        @keyframes blob {
-            0% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
-        .animation-delay-4000 { animation-delay: 4s; }
 
         @keyframes float {
             0% { transform: translateY(0px); }
@@ -99,39 +96,72 @@ if (isset($_SESSION['user_id'])) {
             backface-visibility: hidden;
             text-shadow: 0 2px 5px rgba(255,255,255,0.8);
         }
-        .circle-main.expanded .circle-text { opacity: 0; transform: scale(0.5); }
         .segment-container {
             position: absolute; width: 100%; height: 100%;
-            transform-style: preserve-3d; transform: rotateY(-180deg);
+            transform-style: preserve-3d;
             backface-visibility: hidden; pointer-events: none;
         }
         .circle-main.expanded .segment-container { pointer-events: auto; }
+        .circle-main {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; font-weight: 900;
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            color: #3b82f6; cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 0 20px rgba(255,255,255,0.5), 0 30px 60px rgba(0,0,0,0.1);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 10;
+        }
+        .dark .circle-main {
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #60a5fa;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.1), 0 30px 60px rgba(0,0,0,0.4);
+        }
+        .circle-main:hover { transform: scale(1.05) translateZ(30px); box-shadow: 0 20px 40px rgba(0,0,0,0.2), inset 0 0 30px rgba(255,255,255,0.6); }
+        .dark .circle-main:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(255,255,255,0.2); }
+        .circle-main.expanded { transform: rotateX(65deg) rotateZ(-45deg) scale(0.9); box-shadow: 30px 40px 60px -10px rgba(0,0,0,0.4), inset 0 0 20px rgba(255,255,255,0.4); }
+        .dark .circle-main.expanded { box-shadow: 30px 40px 60px -10px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.1); }
+        
         .segment {
             position: absolute; top: 50%; left: 50%;
             width: 120px; height: 120px;
-            background-color: rgba(255, 255, 255, 0.95); border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             text-align: center; font-weight: bold; color: #1e40af;
             transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease 0.3s, box-shadow 0.3s;
-            transform-origin: center center; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform-origin: center center; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             padding: 5px; opacity: 0;
+            border-radius: 50%;
         }
         .circle-main.expanded .segment { opacity: 1; }
         .segment-content {
             width: 100%; height: 100%; display: flex;
             justify-content: center; align-items: center; border-radius: 50%;
             background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.8);
             color: #3b82f6;
             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s, color 0.3s;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
         }
+        .dark .segment-content {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #93c5fd;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
         .segment:hover .segment-content {
-            background: rgba(255, 255, 255, 0.95); transform: scale(1.1) translateZ(20px);
+            background: rgba(255, 255, 255, 0.95); transform: scale(1.15) translateZ(30px);
             color: #ec4899;
-            box-shadow: 0 10px 25px rgba(31, 38, 135, 0.2);
+            box-shadow: 0 15px 35px rgba(31, 38, 135, 0.3);
+        }
+        .dark .segment:hover .segment-content {
+            background: rgba(15, 23, 42, 0.95);
+            color: #f472b6;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
         }
 
         /* === CAMBIO 1: CSS Adaptativo para el círculo en móviles === */
@@ -217,7 +247,7 @@ if (isset($_SESSION['user_id'])) {
         }
     </style>
 </head>
-<body class="text-slate-700 relative">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 relative transition-colors duration-300">
 
     <!-- Cinematic Intro Overlay -->
     <div id="intro-overlay" style="display: none;">
@@ -273,24 +303,26 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 
-    <!-- Background Blobs -->
-    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
-        <div class="absolute top-[20%] right-[-10%] w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
-        <div class="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-4000"></div>
-    </div>
+    <!-- Particles.js Background -->
+    <div id="particles-js" class="fixed inset-0 z-[-1] pointer-events-none bg-slate-50 dark:bg-slate-900 transition-colors duration-300"></div>
 
-    <header class="bg-white/60 backdrop-blur-md sticky top-0 z-50 border-b border-white/50 shadow-sm" data-aos="fade-down" data-aos-duration="800">
+    <header class="bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-white/40 shadow-sm" data-aos="fade-down" data-aos-duration="800">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-3xl font-black text-blue-600 tracking-wide">Mathsics</a>
             <nav class="hidden md:flex items-center space-x-8">
-                <a href="#features" class="text-gray-600 hover:text-blue-600 font-bold">Características</a>
-                <a href="#why-mathsics" class="text-gray-600 hover:text-blue-600 font-bold">Por qué Mathsics</a>
-                <a href="#tech" class="text-gray-600 hover:text-blue-600 font-bold">Tecnologías</a>
+                <a href="#features" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-colors">Características</a>
+                <a href="#why-mathsics" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-colors">Por qué Mathsics</a>
+                <a href="#tech" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-colors">Tecnologías</a>
             </nav>
-            <a href="inicio_de_sesion.php" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-full hover:bg-blue-700 transition-transform duration-300 hover:scale-105">
-                Ingresar
-            </a>
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none rounded-lg text-lg p-2.5 transition-colors" aria-label="Toggle dark mode">
+                    <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+                    <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                </button>
+                <a href="inicio_de_sesion.php" class="ui-button bg-blue-600 text-white font-bold py-2 px-6 rounded-full hover:bg-blue-700 hover:shadow-[0_0_15px_rgba(37,99,235,0.6)] transition-all duration-300 hover:scale-105">
+                    Ingresar
+                </a>
+            </div>
         </div>
     </header>
 
@@ -308,44 +340,53 @@ if (isset($_SESSION['user_id'])) {
                     La Aventura del Conocimiento te <span class="gradient-text">Espera</span>.
                 </h2>
                 
-                <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto font-bold glass-panel py-4 px-6 rounded-2xl" data-aos="fade-up" data-aos-delay="1800">
+                <p class="mt-6 text-lg md:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto font-bold" data-aos="fade-up" data-aos-delay="1800">
                     Aprende, practica y compite. Lleva tus habilidades matemáticas al siguiente nivel con nuestros desafíos interactivos y comunidad global.
                 </p>
                 <div class="mt-10 flex flex-col sm:flex-row justify-center gap-6 w-full max-w-md mx-auto" data-aos="zoom-in" data-aos-delay="2000">
-                    <a href="registro.php" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-4 px-8 rounded-full hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all duration-300 hover:scale-105 text-lg text-center">
+                    <a href="registro.php" class="ui-button flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-4 px-8 rounded-full shadow-[0_10px_25px_rgba(59,130,246,0.4)] hover:shadow-[0_10px_35px_rgba(59,130,246,0.7)] transition-all duration-300 hover:scale-105 hover:-translate-y-1 text-lg text-center">
                         Crear Cuenta
                     </a>
-                    <a href="inicio_de_sesion.php" class="flex-1 glass-panel text-indigo-700 font-black py-4 px-8 rounded-full hover:bg-white/60 transition-all duration-300 hover:scale-105 text-lg text-center border-2 border-indigo-200">
+                    <a href="inicio_de_sesion.php" class="ui-button flex-1 bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl text-indigo-700 dark:text-indigo-400 font-black py-4 px-8 rounded-full hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all duration-300 hover:scale-105 hover:-translate-y-1 text-lg text-center border border-blue-200 dark:border-blue-700/50 shadow-lg">
                         Iniciar Sesión
                     </a>
+                </div>
+                
+                <!-- Social Proof Badge -->
+                <div class="mt-8 inline-flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200/50 dark:border-slate-700/50 shadow-sm transition-colors" data-aos="fade-up" data-aos-delay="2200">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300" id="social-proof-text">🔥 142 duelos jugados hoy</span>
                 </div>
             </div>
         </section>
 
         <section id="features" class="py-20 relative">
             <div class="container mx-auto px-6">
-                <h2 class="text-3xl md:text-4xl font-black text-center text-slate-800 mb-12" data-aos="fade-up">¿Qué puedes hacer en Mathsics?</h2>
+                <h2 class="text-3xl md:text-4xl font-black text-center text-slate-800 dark:text-white mb-12 transition-colors" data-aos="fade-up">¿Qué puedes hacer en Mathsics?</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="card-3d glass-panel p-8 rounded-3xl border-t-4 border-indigo-500" data-aos="fade-up" data-aos-delay="100">
-                        <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-6 shadow-inner">
-                            <i class="fas fa-calculator text-3xl text-indigo-600" aria-hidden="true"></i>
+                    <div class="card-3d bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-xl border-t-4 border-t-indigo-400" data-aos="fade-up" data-aos-delay="100">
+                        <div class="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-6 shadow-sm border border-indigo-100 dark:border-indigo-800/50">
+                            <i class="fas fa-calculator text-3xl text-indigo-600 dark:text-indigo-400" aria-hidden="true"></i>
                         </div>
-                        <h3 class="text-2xl font-black mb-3 text-slate-800">Ejercicios Interactivos</h3>
-                        <p class="font-bold text-slate-600">Practica aritmética, álgebra, geometría y más con problemas que se adaptan a tu nivel.</p>
+                        <h3 class="text-2xl font-black mb-3 text-slate-800 dark:text-white transition-colors">Ejercicios Interactivos</h3>
+                        <p class="font-bold text-slate-500 dark:text-slate-400 transition-colors">Practica aritmética, álgebra, geometría y más con problemas que se adaptan a tu nivel.</p>
                     </div>
-                    <div class="card-3d glass-panel p-8 rounded-3xl border-t-4 border-orange-500" data-aos="fade-up" data-aos-delay="200">
-                        <div class="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-6 shadow-inner">
-                            <i class="fas fa-user-friends text-3xl text-orange-600" aria-hidden="true"></i>
+                    <div class="card-3d bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-xl border-t-4 border-t-orange-400" data-aos="fade-up" data-aos-delay="200">
+                        <div class="w-16 h-16 rounded-full bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center mb-6 shadow-sm border border-orange-100 dark:border-orange-800/50">
+                            <i class="fas fa-user-friends text-3xl text-orange-600 dark:text-orange-400" aria-hidden="true"></i>
                         </div>
-                        <h3 class="text-2xl font-black mb-3 text-slate-800">Duelos Matemáticos</h3>
-                        <p class="font-bold text-slate-600">Reta a tus amigos o a otros jugadores en emocionantes duelos de velocidad y precisión en tiempo real.</p>
+                        <h3 class="text-2xl font-black mb-3 text-slate-800 dark:text-white transition-colors">Duelos Matemáticos</h3>
+                        <p class="font-bold text-slate-500 dark:text-slate-400 transition-colors">Reta a tus amigos o a otros jugadores en emocionantes duelos de velocidad y precisión en tiempo real.</p>
                     </div>
-                    <div class="card-3d glass-panel p-8 rounded-3xl border-t-4 border-sky-500" data-aos="fade-up" data-aos-delay="300">
-                        <div class="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center mb-6 shadow-inner">
-                            <i class="fas fa-comments text-3xl text-sky-600" aria-hidden="true"></i>
+                    <div class="card-3d bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-xl border-t-4 border-t-sky-400" data-aos="fade-up" data-aos-delay="300">
+                        <div class="w-16 h-16 rounded-full bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center mb-6 shadow-sm border border-sky-100 dark:border-sky-800/50">
+                            <i class="fas fa-comments text-3xl text-sky-600 dark:text-sky-400" aria-hidden="true"></i>
                         </div>
-                        <h3 class="text-2xl font-black mb-3 text-slate-800">Comunidad y Foros</h3>
-                        <p class="font-bold text-slate-600">Comparte tus dudas, ayuda a otros y publica tus propios juegos y creaciones.</p>
+                        <h3 class="text-2xl font-black mb-3 text-slate-800 dark:text-white transition-colors">Comunidad y Foros</h3>
+                        <p class="font-bold text-slate-500 dark:text-slate-400 transition-colors">Comparte tus dudas, ayuda a otros y publica tus propios juegos y creaciones.</p>
                     </div>
                 </div>
             </div>
@@ -353,7 +394,7 @@ if (isset($_SESSION['user_id'])) {
 
         <section id="temas" class="py-20 relative">
             <div class="container mx-auto px-6 text-center flex flex-col items-center">
-                <h2 class="text-3xl md:text-4xl font-black text-slate-800 mb-12" data-aos="zoom-in">Explora los Temas</h2>
+                <h2 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white mb-12 transition-colors" data-aos="zoom-in">Explora los Temas</h2>
                 <div class="scene-container mb-2 text-center flex justify-center w-full">
                     <div class="circle-main" tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar temas de Matemáticas">
                         <div class="circle-text">Matemáticas</div>
@@ -373,51 +414,51 @@ if (isset($_SESSION['user_id'])) {
         <section id="why-mathsics" class="py-20 relative">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-16" data-aos="fade-up">
-                    <h2 class="text-3xl md:text-5xl font-black text-slate-800 mb-4">¿Las matemáticas no son lo tuyo?</h2>
-                    <p class="text-xl text-slate-600 font-bold max-w-2xl mx-auto">
+                    <h2 class="text-3xl md:text-5xl font-black text-slate-800 dark:text-white mb-4 transition-colors">¿Las matemáticas no son lo tuyo?</h2>
+                    <p class="text-xl text-slate-600 dark:text-slate-400 font-bold max-w-2xl mx-auto transition-colors">
                         Mathsics está diseñado específicamente para eliminar la frustración y ayudarte a entender desde cero.
                     </p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <!-- Razón 1 -->
-                    <div class="glass-panel p-8 rounded-3xl border-l-4 border-blue-500 relative overflow-hidden group" data-aos="fade-up" data-aos-delay="100">
-                        <div class="absolute -right-6 -top-6 text-6xl text-blue-100 group-hover:scale-110 transition-transform duration-300">
+                    <div class="bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-xl border-l-4 border-l-blue-400 relative overflow-hidden group transition-all" data-aos="fade-up" data-aos-delay="100">
+                        <div class="absolute -right-4 -top-4 text-7xl opacity-10 pointer-events-none group-hover:scale-110 group-hover:opacity-20 transition-all duration-300 text-blue-500">
                             <i class="fas fa-robot"></i>
                         </div>
-                        <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6 relative z-10">
-                            <i class="fas fa-brain text-2xl text-blue-600"></i>
+                        <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-6 relative z-10 border border-blue-100 dark:border-blue-800/50">
+                            <i class="fas fa-brain text-2xl text-blue-500 dark:text-blue-400"></i>
                         </div>
-                        <h3 class="text-2xl font-black text-slate-800 mb-4 relative z-10">Tutor de IA Integrado</h3>
-                        <p class="font-bold text-slate-600 relative z-10">
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 relative z-10 transition-colors">Tutor de IA Integrado</h3>
+                        <p class="font-bold text-slate-500 dark:text-slate-400 relative z-10 transition-colors">
                             Si te equivocas, no te dejamos solo. Nuestra Inteligencia Artificial impulsada por la API de google GEMINI la analiza tu error y te explica paso a paso cómo resolverlo de la forma más sencilla.
                         </p>
                     </div>
 
                     <!-- Razón 2 -->
-                    <div class="glass-panel p-8 rounded-3xl border-l-4 border-pink-500 relative overflow-hidden group" data-aos="fade-up" data-aos-delay="200">
-                        <div class="absolute -right-6 -top-6 text-6xl text-pink-100 group-hover:scale-110 transition-transform duration-300">
+                    <div class="bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-xl border-l-4 border-l-pink-400 relative overflow-hidden group transition-all" data-aos="fade-up" data-aos-delay="200">
+                        <div class="absolute -right-4 -top-4 text-7xl opacity-10 pointer-events-none group-hover:scale-110 group-hover:opacity-20 transition-all duration-300 text-pink-500">
                             <i class="fas fa-gamepad"></i>
                         </div>
-                        <div class="w-14 h-14 rounded-full bg-pink-100 flex items-center justify-center mb-6 relative z-10">
-                            <i class="fas fa-trophy text-2xl text-pink-600"></i>
+                        <div class="w-14 h-14 rounded-full bg-pink-50 dark:bg-pink-900/30 flex items-center justify-center mb-6 relative z-10 border border-pink-100 dark:border-pink-800/50">
+                            <i class="fas fa-trophy text-2xl text-pink-500 dark:text-pink-400"></i>
                         </div>
-                        <h3 class="text-2xl font-black text-slate-800 mb-4 relative z-10">Aprende Jugando</h3>
-                        <p class="font-bold text-slate-600 relative z-10">
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 relative z-10 transition-colors">Aprende Jugando</h3>
+                        <p class="font-bold text-slate-500 dark:text-slate-400 relative z-10 transition-colors">
                             Olvídate de los libros aburridos. Aquí subes de nivel, ganas puntos y participas en duelos, transformando el estudio en un juego altamente adictivo.
                         </p>
                     </div>
 
                     <!-- Razón 3 -->
-                    <div class="glass-panel p-8 rounded-3xl border-l-4 border-indigo-500 relative overflow-hidden group" data-aos="fade-up" data-aos-delay="300">
-                        <div class="absolute -right-6 -top-6 text-6xl text-indigo-100 group-hover:scale-110 transition-transform duration-300">
+                    <div class="bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-xl border-l-4 border-l-indigo-400 relative overflow-hidden group transition-all" data-aos="fade-up" data-aos-delay="300">
+                        <div class="absolute -right-4 -top-4 text-7xl opacity-10 pointer-events-none group-hover:scale-110 group-hover:opacity-20 transition-all duration-300 text-indigo-500">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mb-6 relative z-10">
-                            <i class="fas fa-stairs text-2xl text-indigo-600"></i>
+                        <div class="w-14 h-14 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-6 relative z-10 border border-indigo-100 dark:border-indigo-800/50">
+                            <i class="fas fa-stairs text-2xl text-indigo-500 dark:text-indigo-400"></i>
                         </div>
-                        <h3 class="text-2xl font-black text-slate-800 mb-4 relative z-10">A tu Propio Ritmo</h3>
-                        <p class="font-bold text-slate-600 relative z-10">
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 relative z-10 transition-colors">A tu Propio Ritmo</h3>
+                        <p class="font-bold text-slate-500 dark:text-slate-400 relative z-10 transition-colors">
                             Desde sumas básicas hasta cálculo avanzado. Empezamos en tu nivel actual y la dificultad escala orgánicamente conforme dominas cada tema.
                         </p>
                     </div>
@@ -427,44 +468,48 @@ if (isset($_SESSION['user_id'])) {
 
         <section id="tech" class="py-20 relative">
             <div class="container mx-auto px-6 text-center">
-                <h2 class="text-3xl md:text-4xl font-black text-slate-800 mb-12" data-aos="fade-up">Tecnologías Utilizadas</h2>
-                <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-8" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="text-center transition-transform hover:scale-110">
-                        <i class="fab fa-php text-7xl text-indigo-400" aria-hidden="true"></i>
-                        <p class="mt-2 font-bold text-lg">PHP</p>
+                <h2 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white mb-12 transition-colors" data-aos="fade-up">Tecnologías Utilizadas</h2>
+                <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-12" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="text-center transition-transform hover:scale-110 flex flex-col items-center">
+                        <div class="w-20 h-20 flex items-center justify-center"><i class="fab fa-php text-7xl text-indigo-400" aria-hidden="true"></i></div>
+                        <p class="mt-2 font-bold text-lg dark:text-slate-300">PHP</p>
                     </div>
-                    <div class="text-center transition-transform hover:scale-110">
-                        <i class="fas fa-database text-7xl text-blue-500" aria-hidden="true"></i>
-                        <p class="mt-2 font-bold text-lg">MySQL</p>
+                    <div class="text-center transition-transform hover:scale-110 flex flex-col items-center">
+                        <div class="w-20 h-20 flex items-center justify-center"><i class="fas fa-database text-7xl text-blue-500" aria-hidden="true"></i></div>
+                        <p class="mt-2 font-bold text-lg dark:text-slate-300">MySQL</p>
                     </div>
-                    <div class="text-center transition-transform hover:scale-110">
-                        <i class="fab fa-js-square text-7xl text-yellow-400" aria-hidden="true"></i>
-                        <p class="mt-2 font-bold text-lg">JavaScript</p>
+                    <div class="text-center transition-transform hover:scale-110 flex flex-col items-center">
+                        <div class="w-20 h-20 flex items-center justify-center"><i class="fab fa-js-square text-7xl text-yellow-400" aria-hidden="true"></i></div>
+                        <p class="mt-2 font-bold text-lg dark:text-slate-300">JavaScript</p>
                     </div>
-                    <div class="text-center transition-transform hover:scale-110">
-                        <i class="fab fa-html5 text-7xl text-orange-500" aria-hidden="true"></i>
-                        <p class="mt-2 font-bold text-lg">HTML5</p>
+                    <div class="text-center transition-transform hover:scale-110 flex flex-col items-center">
+                        <div class="w-20 h-20 flex items-center justify-center"><i class="fab fa-html5 text-7xl text-orange-500" aria-hidden="true"></i></div>
+                        <p class="mt-2 font-bold text-lg dark:text-slate-300">HTML5</p>
                     </div>
-                    <div class="text-center transition-transform hover:scale-110">
-                        <img src="https://tailwindcss.com/favicons/favicon-32x32.png?v=3" alt="Tailwind CSS" class="h-16 w-16 mx-auto">
-                        <p class="mt-2 font-bold text-lg">Tailwind CSS</p>
+                    <div class="text-center transition-transform hover:scale-110 flex flex-col items-center">
+                        <div class="w-20 h-20 flex items-center justify-center"><img src="https://tailwindcss.com/favicons/favicon-32x32.png?v=3" alt="Tailwind CSS" class="w-full h-full object-contain"></div>
+                        <p class="mt-2 font-bold text-lg dark:text-slate-300">Tailwind CSS</p>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer class="bg-slate-800 text-white">
+    <footer class="bg-slate-800 dark:bg-slate-950 text-white border-t-4 border-blue-500 transition-colors">
         <div class="container mx-auto px-6 py-12">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="text-center md:text-left mb-6 md:mb-0">
-                    <h3 class="text-2xl font-black">Mathsics</h3>
-                    <p class="text-slate-300">© 2025. Todos los derechos reservados.</p>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="text-center md:text-left">
+                    <h3 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Mathsics</h3>
+                    <p class="text-slate-400 mt-2 font-bold">Plataforma interactiva de aprendizaje</p>
+                    <p class="text-slate-500 text-sm mt-1">© 2025. Todos los derechos reservados.</p>
                 </div>
-                <div class="flex items-center gap-6">
-                    <p class="font-bold">Apoyado por:</p>
-                    <div class="bg-white h-16 w-32 rounded-lg flex items-center justify-center">
-                        <span class="text-slate-700 font-bold text-sm">Logo U</span>
+                
+                <div class="text-center md:text-right bg-slate-700/40 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-600/50 shadow-lg backdrop-blur-sm">
+                    <p class="text-blue-400 text-xs font-black uppercase tracking-widest mb-1 opacity-80">Desarrollado por</p>
+                    <p class="text-white font-black text-xl tracking-wide">Francisco Jarem Manzo Suastegui</p>
+                    <p class="text-slate-300 font-bold text-sm mt-1">Ingeniería en Desarrollo de Software</p>
+                    <div class="inline-flex items-center gap-2 mt-3 bg-slate-800/80 dark:bg-slate-950/80 px-4 py-1.5 rounded-full text-xs font-bold text-indigo-300 border border-indigo-500/30 shadow-inner">
+                        <i class="fas fa-map-marker-alt"></i> Sede: Portales
                     </div>
                 </div>
             </div>
@@ -764,6 +809,151 @@ if (isset($_SESSION['user_id'])) {
                     toggleCircle();
                 }
             });
+        });
+    </script>
+    
+    <!-- Librería Particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // === NUEVAS CARACTERÍSTICAS (WOW FACTOR) ===
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Dark Mode Toggle Logic
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+            // Set initial icon
+            if (document.documentElement.classList.contains('dark')) {
+                lightIcon.classList.remove('hidden');
+            } else {
+                darkIcon.classList.remove('hidden');
+            }
+
+            themeToggleBtn.addEventListener('click', function() {
+                darkIcon.classList.toggle('hidden');
+                lightIcon.classList.toggle('hidden');
+                
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                    updateParticlesTheme('light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                    updateParticlesTheme('dark');
+                }
+            });
+
+            // 2. Microinteracciones de Audio
+            const hoverAudio = new Audio('sonidos/click.mp3');
+            hoverAudio.volume = 0.05; // Muy bajito, solo táctil
+            
+            const interactableElements = document.querySelectorAll('.ui-button, .card-3d, .segment, #math-title');
+            interactableElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    hoverAudio.currentTime = 0; // reset
+                    hoverAudio.play().catch(e => {}); // Ignore autoplay errors
+                });
+            });
+
+            // 3. Social Proof Dinámico
+            const socialProofEl = document.getElementById('social-proof-text');
+            if (socialProofEl) {
+                const phrases = [
+                    "🔥 142 duelos jugados hoy",
+                    "🟢 58 estudiantes en línea",
+                    "⭐ 1,204 ejercicios resueltos",
+                    "🚀 15 nuevos niveles superados"
+                ];
+                let currentPhraseIndex = 0;
+                setInterval(() => {
+                    socialProofEl.style.opacity = 0;
+                    setTimeout(() => {
+                        currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
+                        socialProofEl.textContent = phrases[currentPhraseIndex];
+                        socialProofEl.style.opacity = 1;
+                    }, 500);
+                }, 4000);
+                socialProofEl.style.transition = 'opacity 0.5s ease';
+            }
+
+            // 4. Particles.js Configuración Matemática
+            function initParticles(theme) {
+                const particleColor = theme === 'dark' ? "#60a5fa" : "#3b82f6"; // Azul claro o azul fuerte
+                
+                particlesJS('particles-js', {
+                  "particles": {
+                    "number": {
+                      "value": 40,
+                      "density": { "enable": true, "value_area": 800 }
+                    },
+                    "color": { "value": particleColor },
+                    "shape": {
+                      "type": "char",
+                      "stroke": { "width": 0, "color": "#000000" },
+                      "polygon": { "nb_sides": 5 },
+                      "character": {
+                        "value": ["+", "-", "x", "÷", "∑", "π", "=", "√"],
+                        "font": "Nunito",
+                        "style": "",
+                        "weight": "bold"
+                      }
+                    },
+                    "opacity": {
+                      "value": 0.4,
+                      "random": true,
+                      "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false }
+                    },
+                    "size": {
+                      "value": 16,
+                      "random": true,
+                      "anim": { "enable": false, "speed": 40, "size_min": 0.1, "sync": false }
+                    },
+                    "line_linked": {
+                      "enable": true,
+                      "distance": 150,
+                      "color": particleColor,
+                      "opacity": 0.2,
+                      "width": 1
+                    },
+                    "move": {
+                      "enable": true,
+                      "speed": 1.5,
+                      "direction": "none",
+                      "random": true,
+                      "straight": false,
+                      "out_mode": "out",
+                      "bounce": false,
+                      "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 }
+                    }
+                  },
+                  "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                      "onhover": { "enable": true, "mode": "grab" },
+                      "onclick": { "enable": true, "mode": "push" },
+                      "resize": true
+                    },
+                    "modes": {
+                      "grab": { "distance": 200, "line_linked": { "opacity": 0.4 } },
+                      "push": { "particles_nb": 4 }
+                    }
+                  },
+                  "retina_detect": true
+                });
+            }
+            
+            function updateParticlesTheme(theme) {
+                // Destruir instancia actual si existe (Particles.js no tiene método nativo destroy simple, así que reiniciamos el div)
+                const pDiv = document.getElementById('particles-js');
+                pDiv.innerHTML = '';
+                initParticles(theme);
+            }
+
+            // Iniciar partículas con el tema actual
+            const initialTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            initParticles(initialTheme);
         });
     </script>
 </body>

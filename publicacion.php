@@ -71,11 +71,14 @@ try {
 
     <header class="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <div class="flex items-center gap-4">
-                <a href="foro.php" class="text-gray-500 hover:text-indigo-600 transition p-2 rounded-md flex items-center gap-2">
-                    <i class="fas fa-arrow-left"></i><span class="hidden sm:inline font-semibold">Volver al Foro</span>
-                </a>
-            </div>
+                <div class="flex items-center">
+                    <a href="foro.php" class="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold group transition-colors">
+                        <div class="bg-white shadow-sm border border-gray-200 w-10 h-10 rounded-full flex items-center justify-center group-hover:-translate-x-1 group-hover:border-blue-300 transition-all">
+                            <i class="fas fa-arrow-left transition-transform"></i>
+                        </div>
+                        <span class="hidden sm:inline font-semibold">Volver al Foro</span>
+                    </a>
+                </div>
             <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate hidden sm:block">Publicación</h1>
         </div>
     </header>

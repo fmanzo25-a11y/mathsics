@@ -80,8 +80,11 @@ $category_colors = [
     <header class="sticky top-0 z-40 w-full glass-panel border-b-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
             <h1 class="text-3xl font-black text-slate-800 drop-shadow-sm">Comunidad</h1>
-            <a href="menu.php" class="bg-white/70 text-blue-600 font-bold py-2 px-4 rounded-full hover:bg-white transition-all duration-300 hover:scale-105 border border-white/50 shadow-sm flex items-center gap-2">
-                <i class="fas fa-arrow-left" aria-hidden="true"></i><span class="hidden sm:inline">Volver al Menú</span>
+            <a href="menu.php" class="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold group transition-colors">
+                <div class="bg-white shadow-sm border border-gray-200 w-10 h-10 rounded-full flex items-center justify-center group-hover:-translate-x-1 group-hover:border-blue-300 transition-all">
+                    <i class="fas fa-arrow-left transition-transform"></i>
+                </div>
+                <span class="hidden sm:inline">Volver al Menú</span>
             </a>
         </div>
     </header>

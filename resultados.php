@@ -40,22 +40,57 @@ try {
         }
     }
 
-    // 3. ACTUALIZAR RANKING (Anti-Smurfing: XP ganada * Nivel Inicial)
+    // 3. ACTUALIZAR RANKING (Ligas Dinámicas: Puntos Normalizados y Castigo)
     $isTop3 = false;
     $posicionRanking = 0;
     $puntosRankingReales = 0;
-    if ($xpGanada > 0) {
-        $puntosRankingReales = $xpGanada * $nivelInicial;
-        $stmtUpdateRanking = $conn->prepare("UPDATE ranking SET puntos = puntos + :puntosRanking WHERE id_usuario = :id_usuario");
-        $stmtUpdateRanking->execute([':puntosRanking' => $puntosRankingReales, ':id_usuario' => $id_usuario]);
-        
-        // Obtener posición actual en el ranking
-        $stmtPos = $conn->prepare("SELECT COUNT(*) + 1 as posicion FROM ranking WHERE puntos > (SELECT puntos FROM ranking WHERE id_usuario = :id_usuario)");
-        $stmtPos->execute(['id_usuario' => $id_usuario]);
-        $posicionRanking = (int)$stmtPos->fetchColumn();
-        if ($posicionRanking > 0 && $posicionRanking <= 3) {
-            $isTop3 = true;
+    $puntosPerdidos = 0;
+    $miLigaActual = 'Aficionado';
+    $rankEnMiLiga = 0;
+    
+    // Calcular porcentaje de aciertos
+    $precision = ($totalPreguntas > 0) ? ($aciertos / $totalPreguntas) * 100 : 0;
+    
+    include_once 'ligas.php';
+    verificarYEjecutarReinicioMensual($conn);
+    
+    $infoLigas = obtenerInfoLigas($conn);
+    $miRangoNum = isset($infoLigas[$id_usuario]['rango_num']) ? $infoLigas[$id_usuario]['rango_num'] : 1;
+    
+    // Castigo por inactividad al conectarse
+    $puntosPorInactividad = procesarDecaimientoInactividad($conn, $id_usuario, $miRangoNum);
+    
+    if ($totalPreguntas > 0) {
+        if ($precision >= 50) {
+            // GANAR PUNTOS NORMALIZADOS
+            $multiplicador_nivel = 1.0 + ($nivelInicial * 0.05);
+            $puntosRankingReales = ceil(($aciertos * 10) * $multiplicador_nivel);
+            
+            $stmtUpdateRanking = $conn->prepare("UPDATE ranking SET puntos = puntos + :puntosRanking WHERE id_usuario = :id_usuario");
+            $stmtUpdateRanking->execute([':puntosRanking' => $puntosRankingReales, ':id_usuario' => $id_usuario]);
+        } else {
+            // PERDER PUNTOS (Castigo)
+            $diferencia_precision = 50 - $precision; 
+            $multiplicador_castigo = max(1, ($nivelInicial / 2)) * $miRangoNum;
+            $puntosPerdidos = ceil(($diferencia_precision / 5) * $multiplicador_castigo);
+            if ($puntosPerdidos <= 0) $puntosPerdidos = 5;
+            
+            $stmtUpdateRanking = $conn->prepare("UPDATE ranking SET puntos = GREATEST(5, CAST(puntos AS SIGNED) - :puntosPerdidos) WHERE id_usuario = :id_usuario");
+            $stmtUpdateRanking->execute([':puntosPerdidos' => $puntosPerdidos, ':id_usuario' => $id_usuario]);
         }
+    }
+
+    // Obtener nueva posición
+    $infoLigasNuevas = obtenerInfoLigas($conn);
+    if (isset($infoLigasNuevas[$id_usuario])) {
+        $miLigaActual = $infoLigasNuevas[$id_usuario]['liga'];
+        $posicionRanking = $infoLigasNuevas[$id_usuario]['posicion'];
+        $rankEnMiLiga = 1;
+        foreach($infoLigasNuevas as $id => $data) {
+            if ($id == $id_usuario) break;
+            if ($data['liga'] == $miLigaActual) $rankEnMiLiga++;
+        }
+        if ($rankEnMiLiga <= 3) $isTop3 = true;
     }
 
     // 4. GUARDAR HISTORIAL DE EJERCICIOS
@@ -231,17 +266,27 @@ foreach ($desafiosActivos as $desafio) {
                 <p class="text-lg text-slate-500 font-bold">¡Buen trabajo! Revisa tu progreso:</p>
             <?php endif; ?>
 
-            <?php if ($isTop3): ?>
-                <div class="mt-6 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl p-4 shadow-lg transform -rotate-1 animate-pulse-glow">
-                    <p class="text-white font-black text-xl"><i class="fas fa-crown text-2xl mr-2"></i> ¡Felicidades! ¡Estás entre los 3 mejores del mundo! (#<?php echo $posicionRanking; ?>)</p>
+            <?php if (isset($isTop3) && $isTop3): ?>
+                <div class="mt-6 mb-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-4 shadow-lg transform -rotate-1 animate-pulse-glow">
+                    <p class="text-white font-black text-xl"><i class="fas fa-crown text-2xl mr-2"></i> ¡Impresionante! ¡Estás en el Top 3 de la Liga <?php echo $miLigaActual; ?>! (#<?php echo $rankEnMiLiga; ?>)</p>
                 </div>
             <?php endif; ?>
 
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 my-8 text-left">
                 <div class="bg-blue-100 p-4 rounded-lg border-b-4 border-blue-300"><p class="text-blue-800 text-sm font-bold">ACIERTOS</p><p class="text-3xl font-black text-slate-700"><?php echo htmlspecialchars($aciertos); ?>/<?php echo htmlspecialchars($totalPreguntas); ?></p></div>
                 <div class="bg-amber-100 p-4 rounded-lg border-b-4 border-amber-300"><p class="text-amber-800 text-sm font-bold">EXPERIENCIA</p><p class="text-3xl font-black text-yellow-500">+<?php echo htmlspecialchars($xpGanada); ?> XP</p></div>
-                <div class="bg-purple-100 p-4 rounded-lg border-b-4 border-purple-300"><p class="text-purple-800 text-sm font-bold">RANKING</p><p class="text-3xl font-black text-purple-600">+<?php echo htmlspecialchars($puntosRankingReales); ?> pts</p></div>
-                <div class="bg-green-100 p-4 rounded-lg border-b-4 border-green-300"><p class="text-green-800 text-sm font-bold">NIVEL</p><p class="text-3xl font-black text-slate-700" id="level-display"><?php echo $nivelInicial; ?></p></div>
+                <?php if (isset($puntosPerdidos) && $puntosPerdidos > 0): ?>
+                <div class="bg-red-100 p-4 rounded-lg border-b-4 border-red-300">
+                    <p class="text-red-800 text-xs font-bold uppercase">Castigo de Liga</p>
+                    <p class="text-3xl font-black text-red-600">-<?php echo htmlspecialchars($puntosPerdidos); ?> pts</p>
+                </div>
+            <?php else: ?>
+                <div class="bg-purple-100 p-4 rounded-lg border-b-4 border-purple-300">
+                    <p class="text-purple-800 text-xs font-bold uppercase">Ranking MMR</p>
+                    <p class="text-3xl font-black text-purple-600">+<?php echo htmlspecialchars($puntosRankingReales); ?> pts</p>
+                </div>
+            <?php endif; ?>
+    <div class="bg-green-100 p-4 rounded-lg border-b-4 border-green-300"><p class="text-green-800 text-sm font-bold">NIVEL</p><p class="text-3xl font-black text-slate-700" id="level-display"><?php echo $nivelInicial; ?></p></div>
             </div>
 
             <div class="mb-2">
@@ -255,9 +300,24 @@ foreach ($desafiosActivos as $desafio) {
             </div>
         </div>
 
-        <a href="menu.php" class="mt-10 bg-blue-500 hover:bg-blue-600 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 hover:-translate-y-1 transition-all duration-150 transform inline-block">
-            <i class="fas fa-arrow-right mr-2"></i>Continuar
-        </a>
+        <?php if (rand(1, 100) <= 50): ?>
+            <div class="mt-10 bg-indigo-50 border border-indigo-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+                <h3 class="text-xl sm:text-2xl font-black text-indigo-700 mb-2"><i class="fas fa-lightbulb text-yellow-500 mr-2"></i> ¡Ayúdanos a mejorar!</h3>
+                <p class="text-slate-600 font-bold mb-6">¿Tienes alguna idea o encontraste un error? Nos encantaría escuchar tu opinión.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="encuesta.php" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-lg py-3 px-8 rounded-xl shadow-md transition-all hover:-translate-y-1 active:translate-y-0 flex items-center justify-center">
+                        <i class="fas fa-comment-dots mr-2"></i> Dar sugerencia
+                    </a>
+                    <a href="menu.php" class="bg-white hover:bg-gray-50 text-slate-600 border border-gray-200 font-bold text-lg py-3 px-8 rounded-xl shadow-sm transition-all hover:-translate-y-1 active:translate-y-0 flex items-center justify-center">
+                        Ir al menú
+                    </a>
+                </div>
+            </div>
+        <?php else: ?>
+            <a href="menu.php" class="mt-10 bg-blue-500 hover:bg-blue-600 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 hover:-translate-y-1 transition-all duration-150 transform inline-block">
+                <i class="fas fa-arrow-right mr-2"></i>Continuar
+            </a>
+        <?php endif; ?>
     </main>
 
     <audio id="xp-bar-sound" src="sonidos/xp.mp3" preload="auto" loop></audio>

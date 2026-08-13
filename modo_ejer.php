@@ -103,6 +103,14 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                 <p class="text-lg"><?php echo htmlspecialchars($tema_actual); ?></p>
             </div>
             <div class="flex items-center gap-2">
+                <div class="flex items-center bg-white border border-gray-200 rounded-full h-10 shadow-md group relative pr-1 pl-1 transition-all duration-300" id="music-container">
+                    <button id="toggle-music" class="flex-shrink-0 w-8 h-8 rounded-full font-bold text-lg <?php echo $color_actual['text']; ?> flex items-center justify-center hover:scale-105 transition-transform z-10 bg-white" aria-label="Música de fondo" title="Música de fondo">
+                        <i class="fa-solid fa-music"></i>
+                    </button>
+                    <div class="overflow-hidden transition-all duration-300 max-w-0 group-hover:max-w-xs flex items-center">
+                        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.2" class="w-20 ml-2 mr-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    </div>
+                </div>
                 <button id="toggle-untimed" class="flex items-center justify-center w-10 h-10 rounded-full font-bold text-lg bg-white border border-gray-200 shadow-md <?php echo $color_actual['text']; ?> hover:scale-105 active:scale-95 transition-transform" aria-label="Desactivar temporizador" title="Desactivar temporizador">
                     <i class="fa-solid fa-hourglass-half"></i>
                 </button>
@@ -134,6 +142,7 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
         </footer>
     </div>
     
+    <audio id="bg-music" loop preload="auto"><source src="sonidos/musica.mp3" type="audio/mpeg"></audio>
     <audio id="correct-sound" preload="auto"><source src="sonidos/correct_answers.mp3" type="audio/mpeg"></audio>
     <audio id="incorrect-sound" preload="auto"><source src="sonidos/incorrect_answers.mp3" type="audio/mpeg"></audio>
     <audio id="click-sound" preload="auto"><source src="sonidos/click.mp3" type="audio/mpeg"></audio>
@@ -151,8 +160,12 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
             const timerContainer = document.getElementById('timer-container');
             const explanationContainer = document.getElementById('explanation-container');
             const toggleUntimedBtn = document.getElementById('toggle-untimed');
+            const toggleMusicBtn = document.getElementById('toggle-music');
+            const volumeSlider = document.getElementById('volume-slider');
+            const musicContainer = document.getElementById('music-container');
             const a11yAnnounce = document.getElementById('a11y-announcements');
 
+            const bgMusic = document.getElementById('bg-music');
             const correctSound = document.getElementById('correct-sound');
             const incorrectSound = document.getElementById('incorrect-sound');
             const clickSound = document.getElementById('click-sound');
@@ -173,6 +186,92 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                     setTimeout(() => {
                         a11yAnnounce.textContent = text;
                     }, 50);
+                }
+            }
+            
+            // --- Lógica de Música de Fondo (Ducking) ---
+            let isMusicPlaying = false;
+            let baseVolume = 0.2; // Volumen normal bajo para no desconcentrar
+            let duckedVolume = 0.05; // Volumen casi imperceptible cuando la IA habla
+
+            const initMusic = () => {
+                if (!isMusicPlaying && bgMusic) {
+                    bgMusic.volume = baseVolume;
+                    bgMusic.play().then(() => {
+                        isMusicPlaying = true;
+                        toggleMusicBtn.innerHTML = '<i class="fa-solid fa-music"></i>';
+                    }).catch(e => console.log("Música bloqueada por el navegador hasta interactuar."));
+                    document.removeEventListener('click', initMusic);
+                }
+            };
+            document.addEventListener('click', initMusic, { once: true });
+
+            if (musicContainer && volumeSlider) {
+                musicContainer.addEventListener('mouseenter', () => {
+                    volumeSlider.classList.remove('opacity-0', 'pointer-events-none');
+                });
+                musicContainer.addEventListener('mouseleave', () => {
+                    volumeSlider.classList.add('opacity-0', 'pointer-events-none');
+                });
+                
+                volumeSlider.addEventListener('input', (e) => {
+                    baseVolume = parseFloat(e.target.value);
+                    if (isMusicPlaying) bgMusic.volume = baseVolume;
+                    
+                    if (baseVolume === 0) {
+                        toggleMusicBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                        toggleMusicBtn.classList.add('opacity-50');
+                    } else {
+                        toggleMusicBtn.innerHTML = '<i class="fa-solid fa-music"></i>';
+                        toggleMusicBtn.classList.remove('opacity-50');
+                        if (!isMusicPlaying && bgMusic.paused) {
+                            bgMusic.play();
+                            isMusicPlaying = true;
+                        }
+                    }
+                });
+            }
+
+            if (toggleMusicBtn) {
+                toggleMusicBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if (isMusicPlaying) {
+                        bgMusic.pause();
+                        isMusicPlaying = false;
+                        toggleMusicBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                        toggleMusicBtn.classList.add('opacity-50');
+                    } else {
+                        if (baseVolume === 0) { baseVolume = 0.2; volumeSlider.value = 0.2; }
+                        bgMusic.volume = baseVolume;
+                        bgMusic.play();
+                        isMusicPlaying = true;
+                        toggleMusicBtn.innerHTML = '<i class="fa-solid fa-music"></i>';
+                        toggleMusicBtn.classList.remove('opacity-50');
+                    }
+                });
+            }
+
+            function stopSpeech() {
+                window.speechSynthesis.cancel();
+                if (bgMusic && isMusicPlaying) bgMusic.volume = baseVolume;
+            }
+            
+            function duckMusicTemporarily(durationMs = 1500) {
+                if (bgMusic && isMusicPlaying) {
+                    bgMusic.volume = duckedVolume;
+                    setTimeout(() => {
+                        // Solo restaurar si no está hablando la IA en este momento
+                        if (isMusicPlaying && !window.speechSynthesis.speaking) {
+                            bgMusic.volume = baseVolume;
+                        }
+                    }, durationMs);
+                }
+            }
+
+            function vibrateDevice(pattern) {
+                if ('vibrate' in navigator) {
+                    try { navigator.vibrate(pattern); } 
+                    catch (e) { console.warn("Vibration failed:", e); }
                 }
             }
 
@@ -297,7 +396,8 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                 const feedbackIcon = selectedButton.querySelector('.feedback-icon');
 
                 document.getElementById('ia-container').innerHTML = '';
-                window.speechSynthesis.cancel();
+                stopSpeech();
+                duckMusicTemporarily(1500); // Bajar música momentáneamente al responder
 
                 if (isCorrect) {
                     correctSound?.play().catch(e => console.warn("Audio failed"));
@@ -392,7 +492,7 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
 
             function leerTextoConVoz(texto) {
                 // Detener si hay un audio reproduciéndose
-                window.speechSynthesis.cancel(); 
+                stopSpeech(); 
                 
                 // Limpiar asteriscos que a veces envía la IA
                 const textoLimpio = texto.replace(/\*/g, ''); 
@@ -401,6 +501,11 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                 mensaje.lang = 'es-ES'; 
                 mensaje.rate = 1.0; 
                 mensaje.pitch = 1.0;
+                
+                // Ducking de Audio (bajar volumen de música)
+                mensaje.onstart = () => { if (bgMusic && isMusicPlaying) bgMusic.volume = duckedVolume; };
+                mensaje.onend = () => { if (bgMusic && isMusicPlaying) bgMusic.volume = baseVolume; };
+                mensaje.onerror = () => { if (bgMusic && isMusicPlaying) bgMusic.volume = baseVolume; };
                 
                 // Intentar usar la mejor voz en español disponible
                 const voces = window.speechSynthesis.getVoices();
@@ -430,7 +535,7 @@ $icono_actual = $config_actual['icon'] ?? 'fa-calculator';
                 const trigger = event.target.closest('#btn-ia-explicacion');
                 if (!trigger) return;
 
-                window.speechSynthesis.cancel();
+                stopSpeech();
 
                 const ejercicioActual = exercises[currentExerciseIndex];
                 if (!ejercicioActual) return;

@@ -74,7 +74,12 @@ $avatar_usuario = $_SESSION['user_avatar'] ?? 'images/sinfoto.jpeg';
             <button id="buscar-duelo-btn" class="w-full bg-orange-500 text-white font-black py-4 text-xl rounded-xl shadow-lg border-b-4 border-orange-700 hover:-translate-y-1 active:translate-y-0.5 active:border-b-0 transition-all duration-150 disabled:bg-gray-300 disabled:border-gray-400 disabled:cursor-not-allowed disabled:hover:transform-none" disabled>
                 <i class="fas fa-search mr-2"></i> Buscar Duelo
             </button>
-            <a href="menu.php" class="inline-block mt-6 text-gray-500 hover:text-blue-600 transition font-bold">Volver al menú principal</a>
+            <a href="menu.php" class="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold group transition-colors mt-6 justify-center">
+                <div class="bg-white shadow-sm border border-gray-200 w-10 h-10 rounded-full flex items-center justify-center group-hover:-translate-x-1 group-hover:border-blue-300 transition-all">
+                    <i class="fas fa-arrow-left transition-transform"></i>
+                </div>
+                <span class="hidden sm:inline">Volver al menú principal</span>
+            </a>
         </div>
     </div>
 

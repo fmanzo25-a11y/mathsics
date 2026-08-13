@@ -75,8 +75,11 @@ try {
             <h1 class="text-2xl sm:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center">
                 <i class="fas fa-bell mr-3 text-indigo-500"></i>Notificaciones
             </h1>
-            <a href="menu.php" class="text-slate-600 hover:text-blue-600 font-bold flex items-center gap-2 group transition-all bg-white/50 px-4 py-2 rounded-full shadow-sm hover:shadow-md border border-white/80">
-                <i class="fas fa-arrow-left transition-transform group-hover:-translate-x-1"></i> <span class="hidden sm:inline">Volver</span>
+            <a href="menu.php" class="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold group transition-colors">
+                <div class="bg-white shadow-sm border border-gray-200 w-10 h-10 rounded-full flex items-center justify-center group-hover:-translate-x-1 group-hover:border-blue-300 transition-all">
+                    <i class="fas fa-arrow-left transition-transform"></i>
+                </div>
+                <span class="hidden sm:inline">Volver</span>
             </a>
         </div>
     </header>

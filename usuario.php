@@ -66,11 +66,17 @@ try {
     $racha_actual = $user_data['racha'] ?? 0;
     $puntos_ranking = $user_data['puntos'] ?? 0;
 
-    // Calcular posición en el ranking
-    $stmt_pos = $conn->prepare("SELECT COUNT(*) + 1 as posicion FROM ranking WHERE puntos > :puntos");
-    $stmt_pos->execute(['puntos' => $puntos_ranking]);
-    $pos_data = $stmt_pos->fetch(PDO::FETCH_ASSOC);
-    $posicion_ranking = $pos_data['posicion'] ?? "-";
+    // Calcular posición en el ranking usando Ligas
+    require_once 'ligas.php';
+    verificarYEjecutarReinicioMensual($conn);
+    $infoLigas = obtenerInfoLigas($conn);
+
+    $miLigaObj = isset($infoLigas[$id_usuario]) ? $infoLigas[$id_usuario] : null;
+    $miLigaNombre = $miLigaObj ? $miLigaObj['liga'] : 'Aficionado';
+    $miLigaColor = $miLigaObj ? $miLigaObj['color'] : 'text-green-500';
+    $miLigaBg = $miLigaObj ? $miLigaObj['bg'] : 'bg-green-100';
+    $miLigaIcon = $miLigaObj ? $miLigaObj['icon'] : 'fa-seedling';
+    $posicion_ranking = $miLigaObj ? $miLigaObj['posicion'] : '-';
 
     // 2. Rendimiento General
     $stmt_rendimiento = $conn->prepare("SELECT 
@@ -168,8 +174,11 @@ try {
     
     <!-- Navbar -->
     <nav class="glass-panel sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
-        <a href="javascript:history.back()" class="text-blue-600 hover:text-blue-800 font-bold flex items-center transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i> Volver
+        <a href="javascript:history.back()" class="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold group transition-colors">
+            <div class="bg-white shadow-sm border border-gray-200 w-10 h-10 rounded-full flex items-center justify-center group-hover:-translate-x-1 group-hover:border-blue-300 transition-all">
+                <i class="fas fa-arrow-left transition-transform"></i>
+            </div>
+            <span class="hidden sm:inline">Volver</span>
         </a>
         <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
             Perfil Público
@@ -198,9 +207,9 @@ try {
             <div class="flex-1 text-center md:text-left">
                 <h2 class="text-4xl font-black text-slate-800 mb-2"><?php echo htmlspecialchars($nombre_usuario); ?></h2>
                 <div class="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-bold text-slate-600">
-                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full"><i class="fas fa-star mr-1"></i> <?php echo number_format($puntos_ranking); ?> Pts</span>
-                    <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full"><i class="fas fa-fire mr-1"></i> Racha: <?php echo $racha_actual; ?> días</span>
-                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full"><i class="fas fa-crown mr-1"></i> Experto en: <?php echo $materia_dominante; ?></span>
+                    <a href="ranking.php" class="<?php echo $miLigaBg; ?> <?php echo $miLigaColor; ?> px-3 py-1 rounded-full shadow-sm hover:scale-105 transition"><i class="fas <?php echo $miLigaIcon; ?> mr-1"></i> Liga <?php echo $miLigaNombre; ?> (<?php echo number_format($puntos_ranking); ?> Pts)</a>
+                    <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full shadow-sm"><i class="fas fa-fire mr-1"></i> Racha: <?php echo $racha_actual; ?> días</span>
+                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full shadow-sm"><i class="fas fa-crown mr-1"></i> Experto en: <?php echo $materia_dominante; ?></span>
                 </div>
             </div>
 
